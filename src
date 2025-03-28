@@ -1,0 +1,86 @@
+//Components // MatrixEffect
+
+import React, { useEffect, useRef } from 'react';
+
+const katakana = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+const nums = '0123456789';
+const alphabet = katakana + nums;
+
+const MatrixRain: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const context = canvas.getContext('2d');
+    if (!context) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const fontSize = 16;
+    const columns = canvas.width / fontSize;
+    const drops: number[] = [];
+    const chars: string[] = [];
+
+    for (let x = 0; x < columns; x++) {
+      drops[x] = 1;
+      chars[x] = alphabet[Math.floor(Math.random() * alphabet.length)];
+    }
+
+    context.font = `${fontSize}px monospace`;
+
+    const draw = () => {
+      context.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < drops.length; i++) {
+        const text = chars[i];
+        
+        // Create gradient for each character
+        const gradient = context.createLinearGradient(0, drops[i] * fontSize - fontSize, 0, drops[i] * fontSize);
+        gradient.addColorStop(0, '#0ff');
+        gradient.addColorStop(0.8, '#0f8');
+        gradient.addColorStop(1, '#02f');
+        
+        context.fillStyle = gradient;
+        context.shadowColor = '#0ff';
+        context.shadowBlur = 10;
+        context.fillText(text, i * fontSize, drops[i] * fontSize);
+
+        // Reset and randomize
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+          drops[i] = 0;
+          chars[i] = alphabet[Math.floor(Math.random() * alphabet.length)];
+        }
+        drops[i]++;
+      }
+    };
+
+    const interval = setInterval(draw, 33); // ~60fps
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      context.font = `${fontSize}px monospace`;
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="fixed top-0 left-0 w-full h-full pointer-events-none z-0"
+      style={{ opacity: 0.3 }}
+    />
+  );
+};
+
+export default MatrixRain;
